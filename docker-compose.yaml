@@ -1,0 +1,87 @@
+name: ecomm
+
+services:
+  rest_gateway:
+    build:
+      context: .
+      dockerfile: ./gateways/rest/Dockerfile
+    container_name: rest-gateway
+    environment:
+      PORT: 8000
+      INVENTORY_SERVICE_URL: ${INVENTORY_SERVICE_URL}
+    networks:
+      - ecomm
+    ports:
+      - "8000:8000"
+    mem_limit: 128m
+    cpus: 1
+    depends_on:
+      - inventory_service
+    restart: on-failure
+
+  inventory_service:
+    build:
+      context: .
+      dockerfile: ./services/inventory/Dockerfile
+    container_name: inventory_service
+    environment:
+      DATABASE_URL: ${INVENTORY_DATABASE_URL}
+      SERVICE_URL: ${INVENTORY_SERVICE_URL}
+    networks:
+      - ecomm
+    mem_limit: 128m
+    cpus: 1
+    depends_on:
+      - inventory_db
+    restart: on-failure
+
+  inventory_db:
+    image: mysql:9.1.0
+    container_name: inventory_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${INVENTORY_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${INVENTORY_DB_NAME}
+      MYSQL_USER: ${INVENTORY_DB_USER}
+      MYSQL_PASSWORD: ${INVENTORY_DB_PASSWORD}
+    mem_limit: 1024m
+    cpus: 1
+    networks:
+      - ecomm
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin --user=root --password=${INVENTORY_DB_ROOT_PASSWORD} --host=localhost --port=3306 ping",
+        ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  inventory_db_migrator:
+    image: migrate/migrate
+    volumes:
+      - ./services/inventory/db/migrations:/migrations
+    working_dir: /migrations
+    command:
+      [
+        "-database",
+        "mysql://${INVENTORY_DB_USER}:${INVENTORY_DB_PASSWORD}@tcp(${INVENTORY_DB_HOST}:${INVENTORY_DB_PORT})/${INVENTORY_DB_NAME}",
+        "-path",
+        "/migrations",
+        "up",
+      ]
+    container_name: inventory-db-migrator
+    depends_on:
+      inventory_db:
+        condition: service_healthy
+    restart: none
+    mem_limit: 64m
+    cpus: 0.25
+    networks:
+      - ecomm
+
+networks:
+  ecomm:
+    driver: bridge

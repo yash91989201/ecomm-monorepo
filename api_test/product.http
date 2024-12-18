@@ -1,0 +1,17 @@
+# @write-body-to-temporary-file
+POST http://localhost:8000/products HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Wireless Bluetooth Headphones",
+  "image": "https://example.com/images/headphones.jpg",
+  "category": "Electronics",
+  "description": "High-quality wireless headphones with noise-cancellation features.",
+  "rating": 5,
+  "num_reviews": 124,
+  "price": 99.99,
+  "count_in_stock": 50,
+  "created_at": "2024-12-15T15:30:00Z",
+  "updated_at": "2024-12-15T15:30:00Z"
+}
