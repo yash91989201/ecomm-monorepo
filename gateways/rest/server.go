@@ -10,20 +10,20 @@ import (
 )
 
 type Server struct {
-	ctx         context.Context
-	port        int
-	ecommClient *clients.InventoryClient
-	router      http.Handler
-	httpServer  *http.Server
+	ctx             context.Context
+	port            int
+	inventoryClient *clients.InventoryClient
+	router          http.Handler
+	httpServer      *http.Server
 }
 
 func NewServer(ctx context.Context, inventoryServiceUrl string, port int) (*Server, error) {
-	ecommClient, err := clients.NewInventoryClient(inventoryServiceUrl)
+	inventoryClient, err := clients.NewInventoryClient(inventoryServiceUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	handler := NewHandler(ctx, ecommClient)
+	handler := NewHandler(ctx, inventoryClient)
 
 	router := registerRoutes(handler)
 
@@ -33,11 +33,11 @@ func NewServer(ctx context.Context, inventoryServiceUrl string, port int) (*Serv
 	}
 
 	return &Server{
-		ctx:         ctx,
-		ecommClient: ecommClient,
-		router:      router,
-		port:        port,
-		httpServer:  server,
+		ctx:             ctx,
+		inventoryClient: inventoryClient,
+		router:          router,
+		port:            port,
+		httpServer:      server,
 	}, nil
 }
 
@@ -51,5 +51,5 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) CloseServiceClients() {
-	s.ecommClient.Close()
+	s.inventoryClient.Close()
 }

@@ -1,4 +1,4 @@
-package inventory
+package queries
 
 const (
 	INSERT_PRODUCT = "INSERT INTO product" +

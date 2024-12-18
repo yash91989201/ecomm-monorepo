@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/yash91989201/ecomm-monorepo/common/types"
+	"github.com/yash91989201/ecomm-monorepo/services/inventory/db/queries"
 )
 
 type Repository interface {
@@ -49,7 +50,7 @@ func (r *mysqlRepository) Close() error {
 }
 
 func (r *mysqlRepository) InsertProduct(ctx context.Context, p *types.Product) (*types.Product, error) {
-	queryRes, err := r.db.NamedExecContext(ctx, INSERT_PRODUCT, &p)
+	queryRes, err := r.db.NamedExecContext(ctx, queries.INSERT_PRODUCT, &p)
 	if err != nil {
 		return nil, fmt.Errorf("Error inserting product: %w", err)
 	}
@@ -63,7 +64,7 @@ func (r *mysqlRepository) InsertProduct(ctx context.Context, p *types.Product) (
 
 func (r *mysqlRepository) SelectProductById(ctx context.Context, id string) (*types.Product, error) {
 	var p *types.Product
-	if err := r.db.GetContext(ctx, p, SELECT_PRODUCT_BY_ID); err != nil {
+	if err := r.db.GetContext(ctx, p, queries.SELECT_PRODUCT_BY_ID); err != nil {
 		return nil, fmt.Errorf("Failed to get product: %w", err)
 	}
 
@@ -72,7 +73,7 @@ func (r *mysqlRepository) SelectProductById(ctx context.Context, id string) (*ty
 
 func (r *mysqlRepository) SelectAllProduct(ctx context.Context) ([]*types.Product, error) {
 	var p []*types.Product
-	if err := r.db.SelectContext(ctx, &p, SELECT_PRODUCTS); err != nil {
+	if err := r.db.SelectContext(ctx, &p, queries.SELECT_PRODUCTS); err != nil {
 		return nil, fmt.Errorf("Failed to select all products: %w", err)
 	}
 
@@ -80,7 +81,7 @@ func (r *mysqlRepository) SelectAllProduct(ctx context.Context) ([]*types.Produc
 }
 
 func (r *mysqlRepository) DeleteProductById(ctx context.Context, id string) error {
-	queryRes, err := r.db.ExecContext(ctx, DELETE_PRODUCT, id)
+	queryRes, err := r.db.ExecContext(ctx, queries.DELETE_PRODUCT, id)
 	if err != nil {
 		return fmt.Errorf("Failed to delete product with id %s: %w", id, err)
 	}
@@ -117,7 +118,7 @@ func (r *mysqlRepository) InsertOrder(ctx context.Context, o *types.Order) (*typ
 }
 
 func insertOrder(ctx context.Context, tx *sqlx.Tx, o *types.Order) (*types.Order, error) {
-	queryRes, err := tx.NamedExecContext(ctx, INSERT_ORDER, o)
+	queryRes, err := tx.NamedExecContext(ctx, queries.INSERT_ORDER, o)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to insert order: %w", err)
 	}
@@ -130,7 +131,7 @@ func insertOrder(ctx context.Context, tx *sqlx.Tx, o *types.Order) (*types.Order
 }
 
 func insertOrderItem(ctx context.Context, tx *sqlx.Tx, oi *types.OrderItem) error {
-	queryRes, err := tx.NamedExecContext(ctx, INSERT_ORDER_ITEM, oi)
+	queryRes, err := tx.NamedExecContext(ctx, queries.INSERT_ORDER_ITEM, oi)
 	if err != nil {
 		return fmt.Errorf("Failed to insert order item: %w", err)
 	}
@@ -144,12 +145,12 @@ func insertOrderItem(ctx context.Context, tx *sqlx.Tx, oi *types.OrderItem) erro
 
 func (r *mysqlRepository) SelectOrderById(ctx context.Context, id string) (*types.Order, error) {
 	var o types.Order
-	if err := r.db.GetContext(ctx, &o, SELECT_ORDER_BY_ID); err != nil {
+	if err := r.db.GetContext(ctx, &o, queries.SELECT_ORDER_BY_ID); err != nil {
 		return nil, fmt.Errorf("Failed to get order for id %s : %w", id, err)
 	}
 
 	var items []types.OrderItem
-	if err := r.db.SelectContext(ctx, &items, SELECT_ORDER_ITEMS_BY_ORDER_ID, id); err != nil {
+	if err := r.db.SelectContext(ctx, &items, queries.SELECT_ORDER_ITEMS_BY_ORDER_ID, id); err != nil {
 		return nil, fmt.Errorf("Failed to get order item: %w", err)
 	}
 
@@ -161,13 +162,13 @@ func (r *mysqlRepository) SelectOrderById(ctx context.Context, id string) (*type
 func (r *mysqlRepository) SelectAllOrders(ctx context.Context) ([]*types.Order, error) {
 
 	var orders []*types.Order
-	if err := r.db.SelectContext(ctx, &orders, SELECT_ORDERS); err != nil {
+	if err := r.db.SelectContext(ctx, &orders, queries.SELECT_ORDERS); err != nil {
 		return nil, fmt.Errorf("Failed to get all orders: %w", err)
 	}
 
 	for i := range orders {
 		var items []types.OrderItem
-		if err := r.db.SelectContext(ctx, &items, SELECT_ORDER_ITEMS_BY_ORDER_ID, orders[i].Id); err != nil {
+		if err := r.db.SelectContext(ctx, &items, queries.SELECT_ORDER_ITEMS_BY_ORDER_ID, orders[i].Id); err != nil {
 			return nil, fmt.Errorf("Failed to get order item for order id %s %w", orders[i].Id, err)
 		}
 
@@ -179,11 +180,11 @@ func (r *mysqlRepository) SelectAllOrders(ctx context.Context) ([]*types.Order, 
 
 func (r *mysqlRepository) DeleteOrder(ctx context.Context, id string) error {
 	err := r.execTx(ctx, func(tx *sqlx.Tx) error {
-		if _, err := tx.ExecContext(ctx, DELETE_ORDER_ITEMS_BY_ORDER_ID, id); err != nil {
+		if _, err := tx.ExecContext(ctx, queries.DELETE_ORDER_ITEMS_BY_ORDER_ID, id); err != nil {
 			return fmt.Errorf("Failed to delete order items for order id :%s : %w", id, err)
 		}
 
-		if _, err := tx.ExecContext(ctx, DELETE_ORDER, id); err != nil {
+		if _, err := tx.ExecContext(ctx, queries.DELETE_ORDER, id); err != nil {
 			return fmt.Errorf("Failed to delete order with id %s : %w", id, err)
 		}
 

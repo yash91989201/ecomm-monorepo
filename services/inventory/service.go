@@ -15,15 +15,15 @@ type Service interface {
 	DeleteProductById(ctx context.Context, id string) error
 }
 
-type ecommService struct {
+type inventoryService struct {
 	r Repository
 }
 
 func New(r Repository) Service {
-	return &ecommService{r: r}
+	return &inventoryService{r: r}
 }
 
-func (s *ecommService) InsertProduct(ctx context.Context, name, image, category, description string, rating, numReviews, countInStock int64, price float32) (*types.Product, error) {
+func (s *inventoryService) InsertProduct(ctx context.Context, name, image, category, description string, rating, numReviews, countInStock int64, price float32) (*types.Product, error) {
 	product := &types.Product{
 		Id:           cuid2.Generate(),
 		Name:         name,
@@ -46,14 +46,14 @@ func (s *ecommService) InsertProduct(ctx context.Context, name, image, category,
 	return p, err
 }
 
-func (s *ecommService) SelectProductById(ctx context.Context, id string) (*types.Product, error) {
+func (s *inventoryService) SelectProductById(ctx context.Context, id string) (*types.Product, error) {
 	return s.r.SelectProductById(ctx, id)
 }
 
-func (s *ecommService) SelectAllProduct(ctx context.Context) ([]*types.Product, error) {
+func (s *inventoryService) SelectAllProduct(ctx context.Context) ([]*types.Product, error) {
 	return s.r.SelectAllProduct(ctx)
 }
 
-func (s *ecommService) DeleteProductById(ctx context.Context, id string) error {
+func (s *inventoryService) DeleteProductById(ctx context.Context, id string) error {
 	return s.r.DeleteProductById(ctx, id)
 }
